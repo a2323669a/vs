@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>Arrows (Symbols)</title>
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #map {
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+   <script src="js/ddd.js"></script>
+   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnFNpyv32nhyqNGZJaRJwMKZYKLLM9xn8&callback=initMap" async defer></script>
+    </script>
+<script type="text/javascript">
+// This example adds a predefined symbol (an arrow) to a polyline.
+// Setting offset to 100% places the arrow at the end of the line.
+function initMap() {
+  var map = new google.maps.Map(document.getElementById('map'), {
+    zoom: 11,
+    center: {lat: 38.9071923000, lng: -77.0368707000},
+    mapTypeId: google.maps.MapTypeId.TERRAIN
+  });
+	
+  // [START region_polyline]
+  // Define a symbol using a predefined path (an arrow)
+  // supplied by the Google Maps JavaScript API.
+  var lineSymbol = {
+    path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW
+  };
+
+  // Create the polyline and add the symbol via the 'icons' property.
+d3.csv("js/test1.csv",function(error,data){
+ 		if(error){alert(error);}
+ 		else{
+	  		data.forEach(function(d){
+		  		new google.maps.Polyline({
+				    path: [{lat: d.EntLat*1, lng: d.EntLng*1}, {lat: d.ExtLat*1, lng: d.ExtLng*1}],
+				    icons: [{ icon: lineSymbol, offset: '100%'}],
+				    strokeOpacity: 0.9,
+				    strokeWeight: 3,
+				    map: map
+				  });
+		  	});
+		 }
+ 	}
+ );
+
+ 
+d3.csv("js/cover.csv",function(error,data){
+	if(error){alert(error);}
+	else{
+		data.forEach(function(d){
+			  var bermudaTriangle = new google.maps.Polygon({
+			   // paths: [{lat: d.slat*1,lng:d.slng*1},{lat:d.llat*1,lng:d.llng*1},{lat: d.rlat*1, lng: d.rlng*1}],
+			    paths:getPath(d),
+			    strokeColor: '#000000',
+			    strokeOpacity:0.2,
+			    strokeWeight: 2,
+			    fillColor: getOpacity(d.weight),
+			    fillOpacity: 0.6
+			  }).setMap(map);
+	  	});
+	}
+});
+}
+
+function getOpacity(weight){
+	/* if(weight > 0.1){
+		return "#ffff00";
+	}
+	if(weight>0.05){
+		return "#aaaa00";
+	}
+	return "#444400"; */
+	return weight;
+}
+
+function getPath(d){
+	var points = [];
+	points.push({lat: d.lslat*1,lng:d.lslng*1});
+	getInnerPath(d,points);
+	var di = {llat:d.lslat,llng:d.lslng,rlat:d.rslat,rlng:d.rslng,slat:d.slat,slng:d.slng};
+	points.push({lat: d.rslat*1,lng:d.rslng*1});
+	getInnerOtherPath(di,points);
+	return points;
+}
+var rad =0.4;
+function getInnerPath(di,points){
+var d = {llat:di.llat*1-di.slat*1,llng:di.llng*1-di.slng*1,rlat:di.rlat*1-di.slat*1,rlng:di.rlng*1-di.slng*1};
+//var d = {llat:0,llng:-50,rlat:-100,rlng:-50};
+	if(isCoinside(d)){
+		return [];
+	}
+	var midPoint = getMid(d);//{lat,lng,r}
+	var k1 = getAngle(d.llat-midPoint.lat,d.llng-midPoint.lng),
+		k2 = getAngle(d.rlat-midPoint.lat,d.rlng-midPoint.lng);
+	var k3 = k2;
+	if(k1>k2){
+		k2 = k1;
+		k1=k3;
+	}
+	k3 = k2-k1;
+	if(k3 < 180){
+		for(;k1<=k2;k1 += 1){
+			points.push(getPoint(k1,midPoint,di));
+		}	
+	}else{
+		for(k3 = k2;k3<=360;k3++){
+			points.push(getPoint(k3,midPoint,di));
+		}
+		for(k3 = 0;k3<=k1;k3++){
+			points.push(getPoint(k3,midPoint,di));
+		}
+	}
+	
+	return points;
+}
+
+function getInnerOtherPath(di,points){
+var d = {llat:di.llat*1-di.slat*1,llng:di.llng*1-di.slng*1,rlat:di.rlat*1-di.slat*1,rlng:di.rlng*1-di.slng*1};
+//var d = {llat:0,llng:-50,rlat:-100,rlng:-50};
+	if(isCoinside(d)){
+		return [];
+	}
+	rad = 1.5;
+	var midPoint = getMid(d);//{lat,lng,r}
+	var k1 = getAngle(d.llat-midPoint.lat,d.llng-midPoint.lng),
+		k2 = getAngle(d.rlat-midPoint.lat,d.rlng-midPoint.lng);
+	var k3 = k2;
+	if(k1<k2){
+		k2 = k1;
+		k1=k3;
+	}
+	k3 = k2-k1;
+	if(k3 < 180){
+		for(;k1>=k2;k1 -= 1){
+			points.push(getPoint(k1,midPoint,di));
+		}	
+	}else{
+		for(k3 = k2;k3<=360;k3++){
+			points.push(getPoint(k3,midPoint,di));
+		}
+		for(k3 = 0;k3<=k1;k3++){
+			points.push(getPoint(k3,midPoint,di));
+		}
+	}
+	rad = 0.4;
+	return points;
+}
+
+function toStr(d){
+	return d.llat+","+d.llng+","+d.rlat+","+d.rlng;
+}
+
+function tostr(midPoint,d){
+	var xx = (d.llat+d.rlat)/2 , yy = (d.llng-d.rlng)/2;
+	return (getLength(d.llat-d.rlat,d.llng-d.rlng)/2 +","+ getLength(midPoint.lat-xx,midPoint.lng-yy));
+}
+
+function getLength(lat,lng){
+	return Math.pow(Math.pow(lat,2)+Math.pow(lng,2),0.5);
+}
+
+function isCoinside(d){
+	return (d.llat == d.rlat && d.llng == d.rlng);
+}
+
+function getPoint(k,midPoint,di){
+	k = k/180*Math.PI;
+	return {lat:midPoint.r*Math.cos(k)+midPoint.lat+di.slat*1,lng:midPoint.r*Math.sin(k)+midPoint.lng+di.slng*1};
+}
+
+function getMid(d){
+	var mid = getMidPoint(d,true);
+	if(!isCorss(mid,d)){
+		return mid;
+	}
+	
+	return getMidPoint(d,false);
+}
+
+function isCorss(mid,d){
+	var k = (d.llng-d.rlng)/(d.llat-d.rlat);
+	var b = (d.llng-k*d.llat);
+	return ((k*mid.lat+b-mid.lng)*b < 0);
+}
+
+function getMidPoint(d,plus){
+	var L = getLength(d.llat-d.rlat,d.llng-d.rlng);
+	var lk = L/2*rad;
+	var k = (d.llat-d.rlat)/(d.llng-d.rlng),k1 = -k;
+	k = Math.pow(k,2)+1;
+	k = Math.pow(lk,2)/k;
+	
+	var x,y; 
+	
+	if(plus){
+		x= Math.pow(k,0.5)+(d.llat+d.rlat)/2;	
+	}else{
+		x= -Math.pow(k,0.5)+(d.llat+d.rlat)/2;
+	}
+	
+	if((d.llng-d.rlng) == 0){
+		y = d.rlng-lk;
+	}else{
+		y = k1*(x-(d.llat+d.rlat)/2)+(d.llng+d.rlng)/2;
+	}
+	var r  = Math.pow(Math.pow(1/2*L,2)+Math.pow(lk,2),0.5);
+	return {lat:x,lng:y,r:r};
+}
+
+
+function getAngle(lat,lng){
+	var angle;
+	if(lat>0&&lng>0){
+		angle = Math.atan2(lng,lat);
+	}else if(lat >0 && lng < 0){
+		angle = Math.atan2(-lng,lat);
+		angle = 2*Math.PI-angle;
+	}else if(lat<0&&lng>0){
+		angle  = Math.atan2(lng,-lat);
+		angle = Math.PI-angle;
+	}else if(lat < 0 && lng <0){
+		angle = Math.atan2(-lng,-lat);
+		angle = Math.PI+angle;
+	}
+	
+	return angle*180/Math.PI;
+}
+
+</script>
+    
+  </body>
+</html>

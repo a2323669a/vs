@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<title>Some Title</title>
+<style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #map_canvas {
+        height: 100%;
+      }
+    </style>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=geometry&sensor=false&key=AIzaSyBnFNpyv32nhyqNGZJaRJwMKZYKLLM9xn8&callback=initMap" async defer></script>
+</head>
+<body>
+<div id="map_canvas"></div>
+<script type="text/javascript">
+function getArcPath(center, radiusMeters, startAngle, endAngle, direction){
+    var point, previous,
+        points = Array(),
+        a = startAngle;
+    while (true) {
+        point = google.maps.geometry.spherical.computeOffset(center, radiusMeters, a);
+        points.push(point);
+        if (a == endAngle){
+            break;
+        }
+        a += 1;
+        if (a > 360) {
+            a = 1;
+        }
+    }
+    if (direction == 'counterclockwise') {
+        points = points.reverse();
+    }
+    return points;
+}
+function initMap() {
+var centerPt = new google.maps.LatLng(55.685025, 21.118995);
+var slices = [
+             //startAngle, endAngle, color to fill polygon with
+            [180, 307, 'blue']
+        ],
+        polys = [],
+        radiusMeters = 100;
+var path = getArcPath(centerPt, radiusMeters, slices[0][0], slices[0][1]);
+var map = new google.maps.Map(document.getElementById('map_canvas'), {
+    zoom: 10,
+    center: {lat: 55.685025, lng:21.118995},
+    mapTypeId: google.maps.MapTypeId.TERRAIN
+  });
+
+  var flightPlanCoordinates = [
+    {lat: 37.772, lng: -122.214},
+    {lat: 21.291, lng: -157.821},
+    {lat: -18.142, lng: 178.431},
+    {lat: -27.467, lng: 153.027}
+  ];
+  var flightPath = new google.maps.Polyline({
+    path: path,
+    geodesic: true,
+    strokeColor: '#FF0000',
+    strokeOpacity: 1.0,
+    strokeWeight: 2
+  });
+
+  flightPath.setMap(map);
+}
+</script>
+
+</body>
+</html>

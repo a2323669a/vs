@@ -1,0 +1,31 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title></title>
+    <style type="text/css">
+        div {
+            width: 2px;
+            height: 2px;
+            background-color: red;
+            position: absolute;
+        }
+    </style>
+    <script type="text/javascript">
+        window.onload = function () {
+            var oDivs = document.getElementsByTagName('div');
+            document.onmousemove = function (ev) {
+                var oEvent = ev || event;
+                oDivs[0].style.top = oEvent.clientY+'px';
+                oDivs[0].style.left = oEvent.clientX + 'px';
+            };
+
+        };
+    </script>
+</head>
+<body>
+    <span></span>
+    <div>DSSSSSSSSSSSSSSDSDSDSDSDSD</div>
+
+</body>
+</html>
